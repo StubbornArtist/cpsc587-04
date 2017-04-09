@@ -23,13 +23,10 @@ private:
 	int verticeCount;
 	int instanceCount;
 public:
-	Geometry(bool instanced);
+	Geometry();
 	void initialize();
-	void initializeInstanced();
 	void reloadVertices(vector<float> vertices);
 	void reloadColours(vector<float> colours);
-	void reloadPositions(vector<float> positions);
 	void draw(GLenum mode);
-	void drawInstanced(GLenum mode);
 	void destroy();
 };

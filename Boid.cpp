@@ -3,8 +3,137 @@
 Boid::Boid(vec3 p, vec3 v) {
 	setPosition(p);
 	setVelocity(v);
-	force = vec3(0.0f);
-	updateOrientation();
+	clearAcceleration();
+	theta = 0.0f;
+}
+
+void Boid::run(vector<Boid *> boids, vector<CollisionObject *> colliders, float rA, float rC, float rG, float maxSpeed, float maxForce, float dT) {
+	
+	vec3 avoidForce = avoid(boids, rA, maxSpeed, maxForce);
+	vec3 cohesionForce = cohesion(boids, rC, maxSpeed, maxForce);
+	vec3 gatherForce = gathering(boids, rG, maxSpeed, maxForce);
+	vec3 obstacleForce = obstacles(colliders, rA, maxSpeed, maxForce);
+
+	avoidForce *= 1.5f;
+	cohesionForce *= 0.8f;
+	gatherForce *= 1.0f;
+	obstacleForce *= 1.5f;
+
+	addToAcceleration(avoidForce + cohesionForce + gatherForce + obstacleForce);
+
+
+	velocity += acceleration * dT;
+	velocity = limit(velocity, maxSpeed);
+	position += velocity * dT;
+	updateAngle();
+	clearAcceleration();
+
+}
+
+vec3 Boid::avoid(vector<Boid *> boids, float rA, float maxSpeed, float maxForce) {
+	vec3 v = vec3(0.0f);
+	int count = 0;
+
+
+	for each(Boid * b in boids) {
+		vec3 dir = position - b->getPosition();
+		float d = length(dir);
+		if ((d < rA) && d > 0) {
+			v += (normalize(dir) / d);
+			count++;
+		}
+	}
+
+	if (count > 0) {
+		v /= (float)count;
+	}
+
+	if (length(v) > 0.0f) {
+		v = normalize(v);
+		v *= maxSpeed;
+		v -= velocity;
+		v = limit(v, maxForce);
+	}
+
+	return v;
+}
+
+vec3 Boid::cohesion(vector<Boid *> boids, float rC, float maxSpeed, float maxForce) {
+	vec3 p = vec3(0.0f);
+	int count = 0;
+	for each (Boid * b in boids) {
+		float d = length(position - b->getPosition());
+
+		if (d < rC && d > 0) {
+			p += b->getPosition();
+			count++;
+		}
+	}
+
+	if (count > 0) {
+		p /= count;
+		return seek(p, maxSpeed, maxForce);
+	}
+	return vec3(0.0f);
+}
+
+vec3 Boid::gathering(vector<Boid *> boids, float rG, float maxSpeed, float maxForce) {
+
+	vec3 v = vec3(0.0f);
+	int count = 0;
+
+	for each (Boid * b in boids) {
+		vec3 dir = position - b->getPosition();
+		float d = length(dir);
+		if (d < rG && d > 0) {
+			v += b->getVelocity();
+			count++;
+		}
+	}
+
+	if (count > 0) {
+		v /= (float)count;
+		v = normalize(v) * maxSpeed;
+		v -= velocity;
+		v = limit(v, maxForce);
+		return v;
+	}
+
+	return vec3(0.0f);
+}
+
+vec3 Boid::obstacles(vector<CollisionObject *> colliders, float rA, float maxSpeed, float maxForce) {
+	vec3 v = vec3(0.0f);
+	for each(CollisionObject * collider in colliders) {
+		vec3 p = collider->closestPoint(position);
+		float d = length(p - position);
+		if (d < rA && d > 0) {
+			vec3 w = position - p;
+			v += (w - dot(w, collider->getNormal()))/d;
+		}
+	}
+	return v;
+}
+vec3 Boid::seek(vec3 p, float maxSpeed, float maxForce) {
+	vec3 dir = normalize(p - position) * maxSpeed;
+	return limit((dir - velocity) , maxForce);
+}
+
+vec3 Boid::limit(vec3 p, float max) {
+	if (length(p) > max) {
+		vec3 p2 = normalize(p) * max;
+		return p2;
+	}
+	return p;
+}
+void Boid::addToAcceleration(vec3 a) {
+	acceleration += a;
+}
+vec3 Boid::getAcceleration() {
+	return acceleration;
+}
+void Boid::clearAcceleration() {
+	acceleration = vec3(0.0f);
 }
 void Boid::setVelocity(vec3 v) {
 	velocity = v;
@@ -18,43 +147,10 @@ void Boid::setPosition(vec3 p) {
 vec3 Boid::getPosition() {
 	return position;
 }
-void Boid::addToForce(vec3 fc) {
-	force += fc;
+void Boid::updateAngle() {
+	vec3 vN = normalize(velocity);
+	theta = atan2f(vN.x, vN.y) + (3.14f/2.0f);
 }
-vec3 Boid::getForce() {
-	return force;
-}
-void Boid::setForce(vec3 f) {
-	force = f;
-}
-void Boid::clearForce() {
-	force = vec3(0.0f);
-}
-void Boid::setUp(vec3 u) {
-	up = u;
-}
-void Boid::setHead(vec3 h) {
-	head = h;
-}
-void Boid::setRight(vec3 r) {
-	right = r;
-}
-mat3 Boid :: getOrientation() {
-	return mat3(head, up, right);
-}
-
-void Boid::updateOrientation() {
-
-	//calculate tangent vector
-	vec3 t = normalize(velocity);
-	vec3 temp = normalize((force - (dot(t, force) * t)) - vec3(0.0f, 9.81f, 0.0f));
-	//calculate binormal vector
-	vec3 b = normalize(cross(temp, t));
-	//calculate normal vector
-	vec3 n = cross(t, b);
-
-	setHead(t);
-	setRight(b);
-	setUp(n);
-
+float Boid::getAngle() {
+	return theta;
 }

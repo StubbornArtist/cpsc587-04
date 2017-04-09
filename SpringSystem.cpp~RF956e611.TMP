@@ -1,0 +1,28 @@
+#include "SpringSystem.h"
+#define DT 0.0001
+SpringSystem::SpringSystem() {
+	damping = vec3(0);
+	gravity = vec3(0);
+	springs = vector<Spring *>();
+}
+void SpringSystem :: setDamping(vec3 d) {
+	damping = d;
+}
+void SpringSystem::setGravity(vec3 g) {
+	gravity = g;
+}
+void SpringSystem :: addSpring(Spring * s) {
+	springs.push_back(s);
+}
+void SpringSystem::simulate() {
+	for (int i = 0; i < springs.size(); i++) {
+		vec3 F = springs[i]->getInternalForce();
+		Mass * one = springs[i]->getFirstMass();
+		one->setVelocity(one->getVelocity() + F * ((float)DT / one->getWeight()));
+		one->setPosition(one->getPosition() + (float)DT * one->getVelocity());
+		Mass * two = springs[i]->getSecondMass();
+		two->setVelocity(two->getVelocity() + -F * ((float)DT / two->getWeight()));
+		two->setPosition(two->getPosition() + (float)DT * two->getVelocity());
+	}
+}
+

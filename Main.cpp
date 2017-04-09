@@ -33,8 +33,8 @@
 #define WIDTH 1000
 #define HEIGHT 1000
 #define M_PI 3.14
-#define FLOCK_SIZE 20
-#define DT 0.01f
+#define FLOCK_SIZE 200
+#define DT 0.1f
 
 using namespace std;
 using namespace glm;
@@ -65,9 +65,8 @@ void keys(GLFWwindow * window, int key, int scancode, int action, int mods) {
 //Perform a single draw of the vertices contained in the given Geometry using the given Shader 
 void drawScene(Geometry * g, Shader * sh, mat4 mvp, GLFWwindow * w) {
 	glClearColor(0, 0, 0, 1.0);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT| GL_DEPTH_BUFFER_BIT);
 	glUseProgram(sh->getProgram());
-	glPointSize(9.0f);
 
 	glUniformMatrix4fv(sh->getMVPNum(), 1, GL_FALSE, value_ptr(mvp));
 
@@ -123,25 +122,28 @@ int main(int argc, char *argv[])
 {
 	GLFWwindow * window = initScene();
 	Shader * sh = new Shader("vertex.glsl", "fragment.glsl");
-	Geometry * g = new Geometry(false);
-	BoidSystem * sys = new BoidSystem(DT, 4.0f, 20.0f, 20.5f);
+	Geometry * g = new Geometry();
+	BoidSystem * sys = new BoidSystem(DT, 2.0f, 25.0f, 25.0f);
 	mat4 mvp;
 	vector<float> vertices;
 	vector<float> colours;
 
 	//set up the view and projection matrices
-	mvp = glm::perspective((75* (float)M_PI / 180), (float)(WIDTH / HEIGHT), -99.0f, 100.0f ) *
-		lookAt(vec3(0.0f, 0.0f, -100.0f), vec3(0.0f, 1.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
+	mvp = glm::perspective((75 * (float)M_PI / 180), (float)(WIDTH / HEIGHT), 100.0f, 0.1f) *
+		lookAt(vec3(0.0f, 0.0f, -30.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
 
 	fillColourBuffer(FLOCK_SIZE * 3, vec3(0.439216f, 0.858824f, 0.576471f), &colours);
 	g->reloadColours(colours);
 
-	clock_t diff = 0.0f;
-	clock_t start = clock();
 	sys->randomize(FLOCK_SIZE);
 	sys->getBoidLocations(&vertices);
+	sys->addCollider(new CollisionObject(vec3(0.0f, -1.0f, 0.0f), vec3(0.0f, 25.0f, 0.0f)));
+	sys->addCollider(new CollisionObject(vec3(0.0f, 1.0f, 0.0f), vec3(0.0f, -25.0f, 0.0f)));
+	sys->addCollider(new CollisionObject(vec3(-1.0f, 0.0f, 0.0f), vec3(25.0f, 0.0f, 0.0f)));
+	sys->addCollider(new CollisionObject(vec3(1.0f, 0.0f, 0.0f), vec3(-25.0f, 0.0f, 0.0f)));
 	g->reloadVertices(vertices);
-
+	clock_t diff = 0.0f;
+	clock_t start = clock();
 	while (!glfwWindowShouldClose(window))
 	{	
 		if (diff > (float)DT) {

@@ -1,0 +1,9 @@
+﻿  Boid.cpp
+  CollisionObject.cpp
+  Generating code
+  2 of 876 functions ( 0.2%) were compiled, the rest were copied from previous compilation.
+    0 functions were new in current compilation
+    1 functions had inline decision re-evaluated but remain unchanged
+  Finished generating code
+  Assignment1.vcxproj -> C:\Users\ashle_000\Documents\Projects\cpsc587-04\Release\Assignment4.exe
+  Assignment1.vcxproj -> C:\Users\ashle_000\Documents\Projects\cpsc587-04\Release\Assignment4.pdb (Full PDB)

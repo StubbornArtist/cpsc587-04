@@ -16,5 +16,6 @@ public:
 	void setNormal(vec3 norm);
 	vec3 getPoint();
 	void setPoint(vec3 p);
+	vec3 closestPoint(vec3 p);
 
 };

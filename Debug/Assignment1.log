@@ -1,0 +1,7 @@
+﻿  Main.cpp
+c:\users\ashle_000\documents\projects\cpsc587-04\assignment1\main.cpp(141): warning C4244: 'initializing': conversion from 'float' to 'clock_t', possible loss of data
+c:\users\ashle_000\documents\projects\cpsc587-04\assignment1\main.cpp(150): warning C4244: '-=': conversion from 'float' to 'clock_t', possible loss of data
+  Boid.cpp
+  Generating Code...
+  Assignment1.vcxproj -> C:\Users\ashle_000\Documents\Projects\cpsc587-04\Debug\Assignment4.exe
+  Assignment1.vcxproj -> C:\Users\ashle_000\Documents\Projects\cpsc587-04\Debug\Assignment4.pdb (Full PDB)
