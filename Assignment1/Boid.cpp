@@ -12,24 +12,20 @@ void Boid::run(vec2 mousePos, vector<Boid *> boids, vector<CollisionObject *> co
 	vec3 avoidForce = avoid(boids, rA, maxSpeed, maxForce);
 	vec3 cohesionForce = cohesion(boids, rC, maxSpeed, maxForce);
 	vec3 gatherForce = gathering(boids, rG, maxSpeed, maxForce);
-	vec3 obstacleForce = obstacles(colliders, rA, maxSpeed, maxForce);
-	vec3 mouse = seek(vec3(mousePos, 0.0f), maxSpeed, maxForce);
+	vec3 obstacle = obstacles(colliders, rA, maxSpeed, maxForce);
 
-	avoidForce *= 1.5f;
+
+	avoidForce *= 1.0f;
 	cohesionForce *= 0.8f;
-	gatherForce *= 1.0f;
-	obstacleForce *= 1.5f;
-	mouse *= 0.5f;
+	gatherForce *= 0.9f;
+	obstacle *= 0.5f;
 
-	addToAcceleration(avoidForce + cohesionForce + gatherForce + mouse);
-
-	vec3 prevV = velocity;
+	addToAcceleration(avoidForce + cohesionForce + gatherForce + obstacle);
 
 	velocity += acceleration * dT;
 	velocity = limit(velocity, maxSpeed);
 	position += velocity * dT;
 	updateAngle();
-	updateBank(prevV);
 	clearAcceleration();
 
 }
@@ -51,7 +47,8 @@ vec3 Boid::avoid(vector<Boid *> boids, float rA, float maxSpeed, float maxForce)
 	int count = 0;
 
 
-	for each(Boid * b in boids) {
+	for (int i = 0; i < boids.size(); i++) {
+		Boid * b = boids[i];
 		vec3 dir = position - b->getPosition();
 		float d = length(dir);
 		if ((d < rA) && d > 0) {
@@ -75,7 +72,8 @@ vec3 Boid::avoid(vector<Boid *> boids, float rA, float maxSpeed, float maxForce)
 vec3 Boid::cohesion(vector<Boid *> boids, float rC, float maxSpeed, float maxForce) {
 	vec3 p = vec3(0.0f);
 	int count = 0;
-	for each (Boid * b in boids) {
+	for (int i = 0; i < boids.size(); i++) {
+		Boid * b = boids[i];
 		float d = length(position - b->getPosition());
 
 		if (d < rC && d > 0) {
@@ -96,7 +94,8 @@ vec3 Boid::gathering(vector<Boid *> boids, float rG, float maxSpeed, float maxFo
 	vec3 v = vec3(0.0f);
 	int count = 0;
 
-	for each (Boid * b in boids) {
+	for (int i = 0; i < boids.size(); i++) {
+		Boid * b = boids[i];
 		vec3 dir = position - b->getPosition();
 		float d = length(dir);
 		if (d < rG && d > 0) {
@@ -116,17 +115,23 @@ vec3 Boid::gathering(vector<Boid *> boids, float rG, float maxSpeed, float maxFo
 }
 
 vec3 Boid::obstacles(vector<CollisionObject *> colliders, float rA, float maxSpeed, float maxForce) {
+	vec3 ahead = normalize(velocity) * 0.5f;
 	vec3 v = vec3(0.0f);
-	for each(CollisionObject * collider in colliders) {
-		vec3 p = collider->closestPoint(position);
-		vec3 dir = position - p;
-		float d = length(dir);
-		if (d < rA && d > 0) {
-			vec3 w = position - p;
-			v += normalize(dir)/d;
+	/*
+	CollisionObject * urgent = NULL;
+	for (int i = 0; i < colliders.size(); i++) {
+		CollisionObject * collider = colliders[i];
+		if (collider->collides(ahead) && (urgent == NULL || (length(position - collider->getCenter()) <= length(position - urgent->getCenter())))){
+			urgent = collider;
+		}
+	}*/
+	for (int i = 0; i < colliders.size(); i++) {
+		CollisionObject * collider = colliders[i];
+		if (collider->collides(ahead)) {
+			v = ahead - collider->getCenter();
 		}
 	}
-	return v;
+	return seek(v, maxSpeed, maxForce);
 }
 vec3 Boid::seek(vec3 p, float maxSpeed, float maxForce) {
 	vec3 dir = normalize(p - position) * maxSpeed;
@@ -169,21 +174,3 @@ float Boid::getAngle() {
 	return theta;
 }
 
-void Boid::updateBank(vec3 prevVelocity) {
-	vec3 vN = normalize(velocity);
-	vec3 pN = normalize(prevVelocity);
-	float a1 = -atan2f(vN.x, vN.y);
-	float a2 = -atan2f(pN.x, pN.y);
-	if (a1 - a2 > 3.14f) {
-		if (a1 < a2) {
-			a1 += 2 * 3.14f;
-		}
-		else {
-			a2 += 2 * 3.14f;
-		}
-	}
-	phi = a1 - a2;
-}
-float Boid::getBank() {
-	return phi;
-}

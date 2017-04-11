@@ -7,15 +7,14 @@ using namespace glm;
 class CollisionObject {
 
 private:
-	vec3 normal;
-	vec3 point;
+	float radius;
+	vec3 center;
+	bool inverted;
 
 public:
-	CollisionObject(vec3 n, vec3 p);
-	vec3 getNormal();
-	void setNormal(vec3 norm);
-	vec3 getPoint();
-	void setPoint(vec3 p);
-	vec3 closestPoint(vec3 p);
+	CollisionObject(float r, vec3 c, bool inverted);
+	bool collides(vec3 r);
+	float getRadius();
+	vec3 getCenter();
 
 };

@@ -32,8 +32,6 @@ public:
 	void addToAcceleration(vec3 a);
 	void clearAcceleration();
 	void updateAngle();
-	void updateBank(vec3 prevVelocity);
 	float getAngle();
-	float getBank();
 	void run(vec2 mousePos, vector<Boid *> boids, vector<CollisionObject *> colliders, float rA, float rC, float rG, float maxSpeed, float maxForce, float dT);
 };

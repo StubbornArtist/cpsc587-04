@@ -33,15 +33,13 @@
 #define WIDTH 1000
 #define HEIGHT 1000
 #define M_PI 3.14
-#define FLOCK_SIZE 100
+#define FLOCK_SIZE 50
 #define DT 0.1f
 
 using namespace std;
 using namespace glm;
 
 
-float x;
-float y;
 // reports GLFW errors
 void ErrorCallback(int error, const char* description)
 {
@@ -58,7 +56,9 @@ void QueryGLVersion()
 //A key callback function to switch between simulations
 void keys(GLFWwindow * window, int key, int scancode, int action, int mods) {
 	if (action == GLFW_PRESS) {
-
+		if (key == GLFW_KEY_ESCAPE) {
+			glfwSetWindowShouldClose(window, GL_TRUE);
+		}
 	}
 }
 
@@ -174,7 +174,7 @@ int main(int argc, char *argv[])
 
 	//set up the view and projection matrices
 	mvp = glm::perspective((75 * (float)M_PI / 180), (float)(WIDTH / HEIGHT), 100.0f, 0.1f) *
-		lookAt(vec3(0.0f, 0.0f, -30.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
+		lookAt(vec3(0.0f, 0.0f, -40.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
 
 	fillColourBuffer(FLOCK_SIZE * 3, vec3(0.439216f, 0.858824f, 0.576471f), &colours);
 	g->reloadColours(colours);

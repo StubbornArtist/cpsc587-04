@@ -1,25 +1,24 @@
 #include "CollisionObject.h"
 
-CollisionObject::CollisionObject(vec3 n, vec3 p) {
-	normal = n;
-	point = p;
+CollisionObject::CollisionObject(float r, vec3 c, bool inverted) {
+	radius = r;
+	center = c;
+	CollisionObject::inverted = inverted;
 }
-void CollisionObject::setNormal(vec3 norm) {
-	normal = norm;
-}
-
-vec3 CollisionObject::getNormal() {
-	return normal;
-}
-
-void CollisionObject::setPoint(vec3 p) {
-	point = p;
-}
-
-vec3 CollisionObject::getPoint() {
-	return point;
+bool CollisionObject::collides(vec3 r) {
+	if ( inverted && length(r) >= radius) {
+		return true;
+	}
+	else if (!inverted && length(r) <= radius) {
+		return true;
+	}
+	return false;
 }
 
-vec3 CollisionObject::closestPoint(vec3 p) {
-	return (dot(point - p, normal) / dot(normal, normal)) * normal;
+float CollisionObject :: getRadius() {
+	return radius;
+}
+
+vec3 CollisionObject::getCenter() {
+	return center;
 }

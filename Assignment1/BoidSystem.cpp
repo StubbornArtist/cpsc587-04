@@ -15,8 +15,8 @@ BoidSystem::BoidSystem(float DT, float RA, float RC, float RG, float vMax, float
 	//}
 //}
 void BoidSystem::simulate(vec2 mousePos) {
-	for each(Boid * b in boids) {
-		b->run(mousePos,boids, colliders, RA, RC, RG, vMax, fMax, DT);
+	for (int i = 0; i < boids.size(); i++) {
+		boids[i]->run(mousePos,boids, colliders, RA, RC, RG, vMax, fMax, DT);
 	}
 }
 void BoidSystem :: randomize(int flock_size, float yMax, float xMax, float yMin, float xMin) {
@@ -26,10 +26,8 @@ void BoidSystem :: randomize(int flock_size, float yMax, float xMax, float yMin,
 		float vX = randomFloat(1.0f, -1.0f);
 		float vY = randomFloat(1.0f, -1.0f);
 		addBoid(new Boid(vec3(x, y, 0.0f), vec3(vX, vY, 0.0f)));
-		addCollider(new CollisionObject(vec3(0.0f, -1.0f, 0.0f), vec3(0.0f, yMax, 0.0f)));
-		addCollider(new CollisionObject(vec3(0.0f, 1.0f, 0.0f), vec3(0.0f, yMin, 0.0f)));
-		addCollider(new CollisionObject(vec3(-1.0f, 0.0f, 0.0f), vec3(xMax, 0.0f, 0.0f)));
-		addCollider(new CollisionObject(vec3(1.0f, 0.0f, 0.0f), vec3(xMin, 0.0f, 0.0f)));
+		//addCollider(new CollisionObject(((xMax + 20.0f) - (xMin - 20.0f))/2.0f, vec3(0.0f, 0.0f, 0.0f), true));
+		addCollider(new CollisionObject(2.0f, vec3(0.0f, 0.0f, 0.0f), false));
 	}
 }
 void BoidSystem :: addBoid(Boid * b) {
@@ -39,17 +37,13 @@ void BoidSystem :: addCollider(CollisionObject * c) {
 	colliders.push_back(c);
 }
 void BoidSystem :: getBoidLocations(vector<float> * locationBuf) {
-	for each (Boid * b in boids) {
-		vec3 bPos = b->getPosition();
-		float theta = b->getAngle();
-		float phi = b->getBank();
+	for (int i = 0; i < boids.size(); i++) {
+		vec3 bPos = boids[i]->getPosition();
+		float theta = boids[i]->getAngle();
 
-		vec3 v1 = rotateY(vec3(0.0f, 1.0f, 0.0f), phi);
-		v1 = rotateZ(v1, theta) + bPos;
-		vec3 v2 = rotateY(vec3(0.5f, 0.0f, 0.0f), phi);
-		v2 = rotateZ(v2, theta) + bPos;
-		vec3 v3 = rotateY(vec3(-0.5f, 0.0f, 0.0f), phi);
-		v3 = rotateZ(v3, theta) + bPos;
+		vec3 v1 = rotateZ(vec3(0.0f, 1.0f, 0.0f), theta) + bPos;
+		vec3 v2 = rotateZ(vec3(0.25f, 0.0f, 0.0f), theta) + bPos;
+		vec3 v3 = rotateZ(vec3(-0.25f, 0.0f, 0.0f), theta) + bPos;
 
 		locationBuf->push_back(v1.x);
 		locationBuf->push_back(v1.y);
