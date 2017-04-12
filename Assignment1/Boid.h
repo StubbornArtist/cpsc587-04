@@ -5,6 +5,7 @@
 #include<glm/gtx/rotate_vector.hpp>
 #include <vector>
 #include "CollisionObject.h"
+
 using namespace glm;
 using namespace std;
 class Boid {
@@ -21,7 +22,7 @@ private:
 	vec3 cohesion(vector<Boid *> boids,float rC, float maxSpeed, float maxForce);
 	vec3 gathering(vector<Boid *> boids, float rG, float maxSpeed, float maxForce);
 	vec3 seek(vec3 p, float maxSpeed,  float maxForce);
-	vec3 followMouse(vec2 mousePos, float maxSpeed, float maxForce);
+	//vec3 followMouse(vec2 mousePos, float maxSpeed, float maxForce);
 public:
 	Boid(vec3 p, vec3 v);
 	void setVelocity(vec3 v);
@@ -33,5 +34,5 @@ public:
 	void clearAcceleration();
 	void updateAngle();
 	float getAngle();
-	void run(vec2 mousePos, vector<Boid *> boids, vector<CollisionObject *> colliders, float rA, float rC, float rG, float maxSpeed, float maxForce, float dT);
+	void run(vector<Boid *> boids, vector<CollisionObject *> colliders, float rA, float rC, float rG, float maxSpeed, float maxForce, float dT);
 };

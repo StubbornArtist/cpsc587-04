@@ -6,42 +6,34 @@ Boid::Boid(vec3 p, vec3 v) {
 	updateAngle();
 	clearAcceleration();
 }
-
-void Boid::run(vec2 mousePos, vector<Boid *> boids, vector<CollisionObject *> colliders, float rA, float rC, float rG, float maxSpeed, float maxForce, float dT) {
+//Apply avoidance, gathering, and cohesive forces
+void Boid::run(vector<Boid *> boids, vector<CollisionObject *> colliders, float rA, float rC, float rG, float maxSpeed, float maxForce, float dT) {
 	
 	vec3 avoidForce = avoid(boids, rA, maxSpeed, maxForce);
 	vec3 cohesionForce = cohesion(boids, rC, maxSpeed, maxForce);
 	vec3 gatherForce = gathering(boids, rG, maxSpeed, maxForce);
-	vec3 obstacle = obstacles(colliders, rA, maxSpeed, maxForce);
+	vec3 obstacleForce = obstacles(colliders, rA, maxSpeed, maxForce);
 
+	//give each force a weight
+	avoidForce *= 1.3f;
+	cohesionForce *= 0.7f;
+	gatherForce *= 0.8f;
+	obstacleForce *= 0.3f;
 
-	avoidForce *= 1.0f;
-	cohesionForce *= 0.8f;
-	gatherForce *= 0.9f;
-	obstacle *= 0.5f;
+	//add this force the the acceleration
+	addToAcceleration(avoidForce + cohesionForce + gatherForce + obstacleForce);
 
-	addToAcceleration(avoidForce + cohesionForce + gatherForce + obstacle);
-
+	//update the velocity and then the position accordingly
 	velocity += acceleration * dT;
 	velocity = limit(velocity, maxSpeed);
 	position += velocity * dT;
+	//update the boids orientation
 	updateAngle();
+	//clear the acceleration for next simulation step
 	clearAcceleration();
+}
 
-}
-vec3 Boid::followMouse(vec2 mousePos, float maxSpeed, float maxForce) {
-	vec3 v = vec3(0.0f);
-	vec3 dir = position - vec3(mousePos, 0.0f);
-	float d = length(dir);
-	if (d > 0) {
-		v = -normalize(dir) / d;
-	}
-	if (length(v) > 0) {
-		v = ((normalize(v) * maxSpeed) - velocity);
-		v = limit(v, maxForce);
-	}
-	return v;
-}
+//Apply a repsulsive force between all boids that are within radius rA to this boid
 vec3 Boid::avoid(vector<Boid *> boids, float rA, float maxSpeed, float maxForce) {
 	vec3 v = vec3(0.0f);
 	int count = 0;
@@ -68,7 +60,7 @@ vec3 Boid::avoid(vector<Boid *> boids, float rA, float maxSpeed, float maxForce)
 
 	return v;
 }
-
+//Apply a force that will move this boid towards the general area of all other neighbouring boids within the radius rC
 vec3 Boid::cohesion(vector<Boid *> boids, float rC, float maxSpeed, float maxForce) {
 	vec3 p = vec3(0.0f);
 	int count = 0;
@@ -88,9 +80,9 @@ vec3 Boid::cohesion(vector<Boid *> boids, float rC, float maxSpeed, float maxFor
 	}
 	return vec3(0.0f);
 }
-
+//Apply a force which will make this boid match the average velocity of all neighbouring boids within a distance of rG from it
 vec3 Boid::gathering(vector<Boid *> boids, float rG, float maxSpeed, float maxForce) {
-
+	//velocity sum
 	vec3 v = vec3(0.0f);
 	int count = 0;
 
@@ -99,11 +91,13 @@ vec3 Boid::gathering(vector<Boid *> boids, float rG, float maxSpeed, float maxFo
 		vec3 dir = position - b->getPosition();
 		float d = length(dir);
 		if (d < rG && d > 0) {
+			//add neighbour velocity to sum
 			v += b->getVelocity();
 			count++;
 		}
 	}
 
+	//average the velocity
 	if (count > 0) {
 		v /= (float)count;
 		v = (normalize(v) * maxSpeed) - velocity;
@@ -113,25 +107,21 @@ vec3 Boid::gathering(vector<Boid *> boids, float rG, float maxSpeed, float maxFo
 
 	return vec3(0.0f);
 }
-
+//Apply a force from a sphere which increases as the bid gets closer to it (acts as walls for this simulation)
 vec3 Boid::obstacles(vector<CollisionObject *> colliders, float rA, float maxSpeed, float maxForce) {
-	vec3 ahead = normalize(velocity) * 0.5f;
 	vec3 v = vec3(0.0f);
-	/*
-	CollisionObject * urgent = NULL;
 	for (int i = 0; i < colliders.size(); i++) {
 		CollisionObject * collider = colliders[i];
-		if (collider->collides(ahead) && (urgent == NULL || (length(position - collider->getCenter()) <= length(position - urgent->getCenter())))){
-			urgent = collider;
-		}
-	}*/
-	for (int i = 0; i < colliders.size(); i++) {
-		CollisionObject * collider = colliders[i];
-		if (collider->collides(ahead)) {
-			v = ahead - collider->getCenter();
-		}
+		vec3 c = collider->getCenter();
+		float d = collider->getRadius() - length(position - c);
+		//force points towards the center of the sphere 
+		v += normalize(c - position) / (d * d);
 	}
-	return seek(v, maxSpeed, maxForce);
+	if (length(v) > 0) {
+		v = (normalize(v) * maxSpeed) - velocity;
+		v = limit(v, maxForce);
+	}
+	return v;
 }
 vec3 Boid::seek(vec3 p, float maxSpeed, float maxForce) {
 	vec3 dir = normalize(p - position) * maxSpeed;
@@ -166,6 +156,7 @@ void Boid::setPosition(vec3 p) {
 vec3 Boid::getPosition() {
 	return position;
 }
+//Determine the angle of the boid based upon it's normalized velocity vector
 void Boid::updateAngle() {
 	vec3 vN = normalize(velocity);
 	theta = -atan2f(vN.x, vN.y);

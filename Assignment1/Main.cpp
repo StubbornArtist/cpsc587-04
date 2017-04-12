@@ -34,7 +34,6 @@
 #define HEIGHT 1000
 #define M_PI 3.14
 #define FLOCK_SIZE 50
-#define DT 0.1f
 
 using namespace std;
 using namespace glm;
@@ -63,7 +62,7 @@ void keys(GLFWwindow * window, int key, int scancode, int action, int mods) {
 }
 
 //Perform a single draw of the vertices contained in the given Geometry using the given Shader 
-void drawScene(Geometry * g, Shader * sh, mat4 mvp, GLFWwindow * w) {
+void drawFlock(Geometry * g, Shader * sh, mat4 mvp, GLFWwindow * w) {
 	glClearColor(0, 0, 0, 1.0);
 	glClear(GL_COLOR_BUFFER_BIT| GL_DEPTH_BUFFER_BIT);
 	glUseProgram(sh->getProgram());
@@ -75,6 +74,19 @@ void drawScene(Geometry * g, Shader * sh, mat4 mvp, GLFWwindow * w) {
 	glfwSwapBuffers(w);
 
 }
+void drawColliders(Geometry * g, Shader * sh, mat4 mvp, GLFWwindow * w) {
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glUseProgram(sh->getProgram());
+	glPointSize(9.0f);
+
+	glUniformMatrix4fv(sh->getMVPNum(), 1, GL_FALSE, value_ptr(mvp));
+
+	g->draw(GL_POINTS);
+	glUseProgram(0);
+	glfwSwapBuffers(w);
+
+}
+//A function to read values for the boid simulation for a file
 BoidSystem * readScene(string filePath) {
 	float rA = 0.0f;
 	float rC = 0.0f;
@@ -114,6 +126,7 @@ BoidSystem * readScene(string filePath) {
 }
 
 void fillColourBuffer(int num, vec3 colour, vector<float> * buf) {
+	buf->clear();
 	for (int i = 0; i < num; i++) {
 		buf->push_back(colour.r);
 		buf->push_back(colour.g);
@@ -153,20 +166,13 @@ void destroyScene(Geometry * g, Shader * s, GLFWwindow * w) {
 	glfwDestroyWindow(w);
 	glfwTerminate();
 }
-vec2 getMousePos(mat4 mvp, GLFWwindow * window) {
-	double xpos;
-	double ypos;
-	glfwGetCursorPos(window, &xpos, &ypos);
-	vec3 pos = vec3((float)xpos, (float)ypos, 0.0f);
-	vec4 newPos = mvp * vec4(pos, 1.0f);
-	return vec2(newPos.x, newPos.y);
-}
 // PROGRAM ENTRY POINT
 int main(int argc, char *argv[])
 {
 	GLFWwindow * window = initScene();
 	Shader * sh = new Shader("vertex.glsl", "fragment.glsl");
 	Geometry * g = new Geometry();
+	//read values for radii of avoidance, cohesion, and gathering, maximum velcocity, maximum force, and deltaT from the file sim1.txt
 	BoidSystem * sys = readScene("sim1.txt");
 	mat4 mvp;
 	vector<float> vertices;
@@ -176,28 +182,31 @@ int main(int argc, char *argv[])
 	mvp = glm::perspective((75 * (float)M_PI / 180), (float)(WIDTH / HEIGHT), 100.0f, 0.1f) *
 		lookAt(vec3(0.0f, 0.0f, -40.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
 
+	//make all boids a light blue color
 	fillColourBuffer(FLOCK_SIZE * 3, vec3(0.439216f, 0.858824f, 0.576471f), &colours);
 	g->reloadColours(colours);
 
+	//randomize the positions of the boids
 	sys->randomize(FLOCK_SIZE, 30.0f, 30.0f, -30.0f, -30.0f);
+	//sys->addCollider(new CollisionObject(10.0f, vec3(0.0f, 0.0f, 0.0f), false));
+	//get the initial positions of the boids
 	sys->getBoidLocations(&vertices);
 	g->reloadVertices(vertices);
 	clock_t diff = 0.0f;
 	clock_t start = clock();
 	while (!glfwWindowShouldClose(window))
 	{	
-		if (diff > (float)DT) {
-			sys->simulate(getMousePos(mvp, window));
-			vertices.clear();
+		//if deltaT time has passed simulate the flock again
+		if (diff > sys->getDeltaT()) {
+			sys->simulate();
+			//grab new positions of the boids
 			sys->getBoidLocations(&vertices);
 			g->reloadVertices(vertices);
-			diff -= (float)DT;
+			diff -= sys->getDeltaT();
 			start = clock();
-		}
-
-		//draw the vertices
-		drawScene(g, sh, mvp, window);
-		//check for key events
+		}		
+		//draw the flock of boids
+		drawFlock(g, sh, mvp, window);
 		glfwPollEvents();
 
 		diff += clock() - start;

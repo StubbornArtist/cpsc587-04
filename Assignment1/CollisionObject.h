@@ -13,8 +13,9 @@ private:
 
 public:
 	CollisionObject(float r, vec3 c, bool inverted);
-	bool collides(vec3 r);
+	bool collides(vec3 p, vec3 d, float * t);
 	float getRadius();
 	vec3 getCenter();
+	bool isInverted();
 
 };
